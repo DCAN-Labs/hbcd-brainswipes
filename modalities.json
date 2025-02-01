@@ -1,0 +1,6 @@
+{
+    "T1w": ["AnatOnAtlasBrainSwipes_T1w", "AtlasOnAnatBrainSwipes_T1w", "AxialBasalGangliaPutamen_T1w", "AxialSuperiorFrontal_T1w", "CoronalCaudateAmygdala_T1w", "CoronalOrbitoFrontal_T1w", "CoronalPosteriorParietalLingual_T1w", "SagittalInsulaFrontoTemporal_T1w", "SagittalInsulaTemporalHippocampalSulcus_T1w"],
+    "T2w": ["AnatOnAtlasBrainSwipes_T2w", "AtlasOnAnatBrainSwipes_T2w", "AxialBasalGangliaPutamen_T2w", "AxialSuperiorFrontal_T2w", "CoronalCaudateAmygdala_T2w", "CoronalOrbitoFrontal_T2w", "CoronalPosteriorParietalLingual_T2w", "SagittalInsulaFrontoTemporal_T2w", "SagittalInsulaTemporalHippocampalSulcus_T2w"],
+    "fmri": ["T1wOnTaskBrainSwipes_bold", "T2wOnTaskBrainSwipes_bold", "TaskOnT1wBrainSwipes_bold", "TaskOnT2wBrainSwipes_bold"],
+    "dmri": ["res-anat_qcgif-AnteriorCoronal", "res-anat_qcgif-CerebellumAxial", "res-anat_qcgif-LeftBrainStemSagittal", "res-anat_qcgif-LeftTemporalSagittal", "res-anat_qcgif-RightTemporalSagittal", "res-anat_qcgif-PosteriorCoronal", "res-anat_qcgif-SemiovaleAxial"]
+  }
