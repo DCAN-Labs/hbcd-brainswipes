@@ -18,18 +18,17 @@ def main():
     # Create dmri DataFrame
     df_dmri = pd.DataFrame()
 
-    ## Patient ID, Sub ID, Run
+    ## Patient ID & Sub ID
     df_dmri['participant_id'] = df['sample'].str.split('_').str[0]
     df_dmri['session_id'] = df['sample'].str.split('_').str[1]
-    df_dmri['run_id'] = df['sample'].str.split('_').str[2] ## NEED TO DOUBLE CHECK THIS IS CORRECT FOR HBCD DWI
 
     ## Temporary columns
     df_dmri['temp_mean'] = df['aveVote']
     df_dmri['temp_nrev'] = df['count']
-    df_dmri['temp_mod'] = df['sample'].str.split('_').str[4] ## NEED TO DOUBLE CHECK THIS IS CORRECT FOR HBCD DWI
+    df_dmri['temp_mod'] = df['sample'].str.split('_').str[2] + '_' + df['sample'].str.split('_').str[3]
 
     # Filter for each modality type and merge to output df
-    df_merge = pd.DataFrame(columns=["participant_id", "session_id", "run_id"])
+    df_merge = pd.DataFrame(columns=["participant_id", "session_id"])
     for mod in dmri:
         df_filt = df_dmri[df_dmri['temp_mod'].str.contains(mod)]
         df_filt = df_filt.drop('temp_mod', axis=1)
@@ -39,7 +38,7 @@ def main():
         # Insert new QC column for cleaner column ordering
         df_filt[f"{mod}_QC"]=np.nan
 
-        df_merge=pd.merge(df_merge, df_filt, on=["participant_id", "session_id", "run_id"], how="outer")
+        df_merge=pd.merge(df_merge, df_filt, on=["participant_id", "session_id"], how="outer")
 
     # Adjust values after merging
     for index, row in df_merge.iterrows():
