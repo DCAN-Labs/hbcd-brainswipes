@@ -65,9 +65,22 @@ def main():
         df_merge['QC_Sum'] = df_merge[qc_columns].sum(axis=1, skipna=False) # include NaNs
         df_merge['QC'] = np.where(df_merge['QC_Sum'].isna(), np.nan, (df_merge['QC_Sum'] == 9).astype(int))
 
-        # Drop sum columns and save 
+        # Drop sum columns
         df_merge = df_merge.drop('QC_Sum', axis=1)
+
+        # Ensure column order is correctly set
+        columns_list=["participant_id", "session_id", "run_id", "QC"]
+        for mod in smri:
+            columns_list.append(f"{mod}_mean")
+            columns_list.append(f"{mod}_nrev")
+            columns_list.append(f"{mod}_QC")
+        df_merge = df_merge.reindex(columns=columns_list)
+
+        # Save
         df_merge.to_csv(f'img_brainswipes_xcpd_{tx}.tsv', index=None, na_rep='NA', sep='\t')
+
+
+
 
     # FMRI
     # Create fmri DataFrame
@@ -121,10 +134,19 @@ def main():
     df_merge['fMRI_ref-T1w_QC'] = np.where(df_merge['T1w_QC_Sum'].isna(), np.nan, (df_merge['T1w_QC_Sum'] == 2).astype(int))
     df_merge['fMRI_ref-T2w_QC'] = np.where(df_merge['T2w_QC_Sum'].isna(), np.nan, (df_merge['T2w_QC_Sum'] == 2).astype(int))
 
-    # Drop sum columns and save 
+    # Drop sum columns
     df_merge = df_merge.drop(['T1w_QC_Sum', 'T2w_QC_Sum'], axis=1)
+
+    # Ensure column order is correctly set
+    columns_list=["participant_id", "session_id", "run_id", "fMRI_ref-T1w_QC", "fMRI_ref-T2w_QC"]
+    for mod in fmri:
+        columns_list.append(f"{mod}_mean")
+        columns_list.append(f"{mod}_nrev")
+        columns_list.append(f"{mod}_QC")
+    df_merge = df_merge.reindex(columns=columns_list)
+
+    # Save
     df_merge.to_csv('img_brainswipes_xcpd_bold.tsv', index=None, na_rep='NA', sep='\t')
             
 if __name__ == "__main__":
     main()
-

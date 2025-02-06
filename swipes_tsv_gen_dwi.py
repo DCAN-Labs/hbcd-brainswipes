@@ -60,8 +60,18 @@ def main():
     df_merge['QC_Sum'] = df_merge[qc_columns].sum(axis=1, skipna=False) # include NaNs
     df_merge['DWI_QC'] = np.where(df_merge['QC_Sum'].isna(), np.nan, (df_merge['QC_Sum'] == 7).astype(int))
 
-    # Drop sum columns and save 
+    # Drop sum columns
     df_merge = df_merge.drop('QC_Sum', axis=1)
+
+    # Ensure column order is correctly set
+    columns_list=["participant_id", "session_id", "run_id", "QC"]
+    for mod in dmri:
+        columns_list.append(f"{mod}_mean")
+        columns_list.append(f"{mod}_nrev")
+        columns_list.append(f"{mod}_QC")
+    df_merge = df_merge.reindex(columns=columns_list)
+
+    # Save
     df_merge.to_csv('img_brainswipes_qsiprep_dwi.tsv', index=None, na_rep='NA', sep='\t')
             
 if __name__ == "__main__":
