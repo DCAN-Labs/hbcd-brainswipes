@@ -72,7 +72,7 @@ def main():
     df_merge = df_merge.reindex(columns=columns_list)
 
     # Save
-    df_merge.to_csv('img_brainswipes_qsiprep_dwi.tsv', index=None, na_rep='NA', sep='\t')
+    df_merge.to_csv('img_brainswipes_qsiprep-dwi.tsv', index=None, na_rep='NA', sep='\t')
             
 if __name__ == "__main__":
     main()
