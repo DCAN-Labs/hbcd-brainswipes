@@ -42,7 +42,6 @@ def main():
 
             # Insert new QC column for cleaner column ordering
             df_filt[f"{mod}_QC"]=np.nan
-
             df_merge=pd.merge(df_merge, df_filt, on=["participant_id", "session_id", "run_id"], how="outer")
 
         # Adjust values after merging
@@ -76,11 +75,15 @@ def main():
             columns_list.append(f"{mod}_QC")
         df_merge = df_merge.reindex(columns=columns_list)
 
+        # Drop 'Txw_' from column headers as this will be redundant after prepending table name in next step
+        df_merge.columns = df_merge.columns.str.replace(f'{tx}_', '')
+
+        # Prepend table name to all column headers except first 3
+        new_columns = df_merge.columns[:3].tolist() + [f'img_brainswipes_xcpd-{tx}_' + col for col in df_merge.columns[3:]]
+        df_merge.columns = new_columns
+
         # Save
         df_merge.to_csv(f'img_brainswipes_xcpd_{tx}.tsv', index=None, na_rep='NA', sep='\t')
-
-
-
 
     # FMRI
     # Create fmri DataFrame
@@ -126,27 +129,34 @@ def main():
             elif row[f"{mod}_mean"] >= 0.7:
                  df_merge[f"{mod}_QC"] = 1 # Pass
 
-    # Fill values for fMRI_ref-T1w_QC and fMRI_ref-T2w_QC - take sum of all QC columns - should be equal to 2 if passing and assigned value of 1. otherwise will be assigned 0 (Fail) or NaN if NaNs were present in columns sum was derived from 
+    # Fill values for bold_ref-T1w_QC and bold_ref-T2w_QC - take sum of all QC columns - should be equal to 2 if passing and assigned value of 1. otherwise will be assigned 0 (Fail) or NaN if NaNs were present in columns sum was derived from 
     t1w_qc_columns = [col for col in df_merge.columns if "T1w" and "QC" in col]
     t2w_qc_columns = [col for col in df_merge.columns if "T2w" and "QC" in col]
     df_merge['T1w_QC_Sum'] = df_merge[t1w_qc_columns].sum(axis=1, skipna=False) # include NaNs
     df_merge['T2w_QC_Sum'] = df_merge[t2w_qc_columns].sum(axis=1, skipna=False) 
-    df_merge['fMRI_ref-T1w_QC'] = np.where(df_merge['T1w_QC_Sum'].isna(), np.nan, (df_merge['T1w_QC_Sum'] == 2).astype(int))
-    df_merge['fMRI_ref-T2w_QC'] = np.where(df_merge['T2w_QC_Sum'].isna(), np.nan, (df_merge['T2w_QC_Sum'] == 2).astype(int))
+    df_merge['QC_ref-T1w'] = np.where(df_merge['T1w_QC_Sum'].isna(), np.nan, (df_merge['T1w_QC_Sum'] == 2).astype(int))
+    df_merge['QC_ref-T2w'] = np.where(df_merge['T2w_QC_Sum'].isna(), np.nan, (df_merge['T2w_QC_Sum'] == 2).astype(int))
 
     # Drop sum columns
     df_merge = df_merge.drop(['T1w_QC_Sum', 'T2w_QC_Sum'], axis=1)
 
     # Ensure column order is correctly set
-    columns_list=["participant_id", "session_id", "run_id", "fMRI_ref-T1w_QC", "fMRI_ref-T2w_QC"]
+    columns_list=["participant_id", "session_id", "run_id", "QC_ref-T1w", "QC_ref-T2w"]
     for mod in fmri:
         columns_list.append(f"{mod}_mean")
         columns_list.append(f"{mod}_nrev")
         columns_list.append(f"{mod}_QC")
     df_merge = df_merge.reindex(columns=columns_list)
 
+    # Drop 'bold_' from column headers as this will be redundant after prepending table name in next step
+    df_merge.columns = df_merge.columns.str.replace('bold_', '')
+    
+    # Prepend table name to all column headers except first 3
+    new_columns = df_merge.columns[:3].tolist() + ['img_brainswipes_xcpd-bold_' + col for col in df_merge.columns[3:]]
+    df_merge.columns = new_columns
+
     # Save
     df_merge.to_csv('img_brainswipes_xcpd_bold.tsv', index=None, na_rep='NA', sep='\t')
-            
+
 if __name__ == "__main__":
     main()

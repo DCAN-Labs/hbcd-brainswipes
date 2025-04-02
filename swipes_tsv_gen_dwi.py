@@ -71,6 +71,13 @@ def main():
         columns_list.append(f"{mod}_QC")
     df_merge = df_merge.reindex(columns=columns_list)
 
+    # Prepend table name to all column headers except first 3
+    new_columns = df_merge.columns[:3].tolist() + ['img_brainswipes_qsiprep-dwi_' + col for col in df_merge.columns[3:]]
+    df_merge.columns = new_columns
+
+    # Drop 'qcgif-' from column names for brevity
+    df_merge.columns = df_merge.columns.str.replace('qcgif-', '')
+
     # Save
     df_merge.to_csv('img_brainswipes_qsiprep-dwi.tsv', index=None, na_rep='NA', sep='\t')
             
