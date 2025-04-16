@@ -21,8 +21,8 @@ default_key_structure = {
     "header": "n/a",
     "Units": "n/a",
     "note": "n/a",
-    "table_name": "img_brainswipes_qsiprep-dwi",
-    "table_label": "dwi",
+    "table_name": "img_brainswipes_xcpd-T2w",
+    "table_label": "T2w",
     "order_display": "n/a",
     "domain": "Tabular Imaging",
     "study": "Substudy",
@@ -59,7 +59,7 @@ def update_json_from_csv(csv_file, json_template):
 
     return json_template
 
-csv_file = 'dwi.csv'
+csv_file = 'files/T2w.csv'
 
 # update json and save
 generated_json = update_json_from_csv(csv_file, json_template)

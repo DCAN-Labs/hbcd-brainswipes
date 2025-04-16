@@ -120,9 +120,6 @@ def main():
         columns_list.append(f"{mod}_nrev")
     df_merge = df_merge.reindex(columns=columns_list)
 
-    # Drop 'Txw' from column headers as this will be redundant after prepending table name 
-    df_merge.columns = df_merge.columns.str.replace(f'{tx}', '')
-
     # Drop 'bold_' from column headers as this will be redundant after prepending table name 
     df_merge.columns = df_merge.columns.str.replace('bold_', '')
 
