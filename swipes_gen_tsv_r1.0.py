@@ -129,7 +129,7 @@ def main():
     df_merge=df_merge.round(decimals=3)
 
     # Save
-    df_merge.to_csv('img_brainswipes-xcpd-bold.tsv', index=None, na_rep='NA', sep='\t')
+    df_merge.to_csv('img_brainswipes_xcpd-bold.tsv', index=None, na_rep='NA', sep='\t')
 
 if __name__ == "__main__":
     main()
