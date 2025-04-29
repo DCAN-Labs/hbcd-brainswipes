@@ -6,23 +6,24 @@ from datetime import datetime
 # Example anat: sub-X_ses-X_run-1_space-MNI152NLin6Asym_desc-SagittalInsulaTemporalHippocampalSulcus_T2w
 # Example bold: sub-X_ses-X_task-rest_dir-PA_run-1_space-MNI152NLin6Asym_desc-T2wOnTaskBrainSwipes_bold
 
-# HARDCODE WARNING
-aws_access_key='********'
-aws_secret_key='********'
-
-workdir='/home/feczk001/shared/projects/HBCD'
-input_csv='/home/feczk001/shared/projects/HBCD/BrainSwipes_flagged.csv'
-tempdir='/home/feczk001/shared/projects/HBCD/temp'
+workdir='/home/feczk001/shared/projects/HBCD_QC'
+input_csv=f'{workdir}/src/BrainSwipes_flagged.csv'
+tempdir=f'{workdir}/temp'
+outdir=f'{workdir}/out'
+df=pd.read_csv(input_csv)
 
 bucket_src='/midb-hbcd-prerelease-bids/assembly_bids'
+
+# Read in csv file and strip the name from the flagged_message column
 df=pd.read_csv(input_csv)
+df['comment'] = df['comment'].str.split(':').str[1].str.strip()
 
 if not os.path.exists(tempdir):
     os.makedir(tempdir)
 
 # Create empty lists
-# runID=[] don't need this for final outputs I don't think
 seriesUID=[]
+to_drop = [] # for subject data that doesn't exist on s3
 
 for index, row in df.iterrows():
     # Parse subject and session IDs
@@ -45,18 +46,31 @@ for index, row in df.iterrows():
     # Download json to temp dir
     filename=os.path.basename(json_s3)
     json_temp=f'{tempdir}/{filename}'
-    cmd=f's3cmd {json_s3} {tempdir}/ > /dev/null 2>&1'
-    os.system(cmd)
+    if not os.path.exists(json_temp):
+        cmd=f's3cmd sync {json_s3} {tempdir}/'
+        os.system(cmd)
 
     # Load JSON data and parse SeriesInstanceUID
-    data = json.loads(json_temp)
-    UID = data['SeriesInstanceUID']
-    seriesUID.append(UID)
+    if os.path.exists(json_temp):
+        with open(json_temp, 'r') as f:
+            json_tmp = f.read()
+        data = json.loads(json_tmp)
+        UID = data['SeriesInstanceUID']
+        seriesUID.append(UID)
+    else:
+        print(f"File {json_temp} does not exist. Skipping...")
+        to_drop.append(index)
 
 # Update DataFrame with SeriesInstanceUID and save to csv
-df['SeriesInstanceUID'] = seriesUID
-date = datetime.now().strftime("%Y-%m-%d")
-df.to_csv(f'BrainSwipes_Flagged_{date}.csv', index=False)
+df = df.drop(to_drop).reset_index(drop=True)
+
+df_out=pd.DataFrame()
+df_out['SeriesInstanceUID'] = seriesUID
+df_out['comment'] = df['comment']
+df_out['scan'] = df['scan']
+
+date = datetime.now().strftime("%m-%d-%Y")
+df_out.to_csv(f'{outdir}/BrainSwipes_Flagged_{date}.csv', index=False)
 
 
 
