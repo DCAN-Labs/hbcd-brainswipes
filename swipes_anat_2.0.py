@@ -54,6 +54,13 @@ def main():
                 if pd.isna(row[f"{mod}_nrev"]):
                     df_merge.at[index, f"{mod}_nrev"] = 0
 
+        # Ensure that all *_nrev columns are set to integer (*_summary_nrev not yet created)
+        cols_to_int = [
+            c for c in df_merge.columns
+            if c.endswith('_nrev')
+            ]
+        df_merge[cols_to_int] = df_merge[cols_to_int].astype(int)
+
         # Create summary_QC and summary_nrev columns from average across mean QC and mean nrev columns
         mean_columns = [col for col in df_merge.columns if "_mean" in col]
         nrev_columns = [col for col in df_merge.columns if "_nrev" in col]
@@ -69,8 +76,9 @@ def main():
             columns_list.append(f"{mod}_nrev")
         df_merge = df_merge.reindex(columns=columns_list)
 
-        # Drop 'Txw_' from column headers as this will be redundant after prepending table name 
+        # Drop 'Txw_' and 'BrainSwipes' from column headers as this will be redundant after prepending table name 
         df_merge.columns = df_merge.columns.str.replace(f'{tx}_', '')
+        df_merge.columns = df_merge.columns.str.replace('BrainSwipes', '')
 
         # Prepend table name to all column headers except first 3
         new_columns = df_merge.columns[:3].tolist() + [f'img_brainswipes_xcpd_{hash_n}_{tx}_' + col for col in df_merge.columns[3:]]
