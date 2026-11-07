@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 
-hash_n = ['d902942d+7a4c379b', '364caa63+7a4c379b']
+hash_n = ['hash-d902942d+7a4c379b', 'hash-364caa63+7a4c379b']
 
 # DEFINITIONS
 smri = ["AnatOnAtlasBrainSwipes", "AtlasOnAnatBrainSwipes", "AxialBasalGangliaPutamen", "AxialSuperiorFrontal", "CoronalCaudateAmygdala", "CoronalOrbitoFrontal", "CoronalPosteriorParietalLingual", "SagittalInsulaFrontoTemporal", "SagittalInsulaTemporalHippocampalSulcus"]
@@ -40,10 +40,10 @@ def filter_and_merge(src_data, tx, hash):
 
 # WORK
 for hash in hash_n:
-    if hash == 'd902942d+7a4c379b':
+    if hash == 'hash-d902942d+7a4c379b':
         src_data = 'data/BrainSwipes-HBCD3pt1-results.csv'
         tx='T2w'
-    elif hash == '364caa63+7a4c379b':
+    elif hash == 'hash-364caa63+7a4c379b':
         src_data = 'data/BrainSwipes-HBCD3pt2-results.csv'
         tx='T1w'
 
