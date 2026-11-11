@@ -1,12 +1,46 @@
 import pandas as pd
-import os
+from pathlib import Path
 
+## HARDCODED INPUTS/VARIABLES
+# Output directories
+chat_dir = Path("data/parsed-chat")
+output_dir = Path("data/BrainSwipes_updated_with_chat_results")
+
+# Google Sheet ID where BrainSwipes chat info is pulled from
+sheet_id = "1P6QFJaZjb-F5roWkzQXkoGFW1E95t9rge6RfNmmKozc"
+px_gids = {
+    "pt1": "898005270",
+    "pt2": "1197223882"
+}
+
+# Hash IDs
 hash_n = ['hash-d902942d+7a4c379b', 'hash-364caa63+7a4c379b']
 
-# DEFINITIONS
+# Modality types for structural MRI
 smri = ["AnatOnAtlasBrainSwipes", "AtlasOnAnatBrainSwipes", "AxialBasalGangliaPutamen", "AxialSuperiorFrontal", "CoronalCaudateAmygdala", "CoronalOrbitoFrontal", "CoronalPosteriorParietalLingual", "SagittalInsulaFrontoTemporal", "SagittalInsulaTemporalHippocampalSulcus"]
 
-# FUNCTIONS
+## FUNCTIONS
+def load_and_filter_parsed_chat(sheet_id, sheet_gid):
+
+    url = f"https://docs.google.com/spreadsheets/d/{sheet_id}/export?format=csv&gid={sheet_gid}"
+    df = pd.read_csv(url, dtype=str, header=None).dropna(how="all")
+
+    # Separate alternating user and assistant messages
+    n = len(df) // 2
+    df_chat = pd.DataFrame({
+        "sample": df.iloc[:2*n:2, 0].to_numpy(),
+        "Chat": df.iloc[1:2*n:2, 0].to_numpy()
+    })
+
+    # Filter flagged images associated with lmoore (exclude Pass)
+    df_chat = df_chat[
+        df_chat["Chat"].str.contains("lmoore", na=False) &
+        ~df_chat["Chat"].str.contains("Pass", na=False)
+    ]
+
+    # Assign post-hoc ratings
+    return df_chat[["sample"]].assign(aveVote=0, count=1)
+
 def filter_and_merge(src_data, tx, hash):
 
     df = pd.read_csv(src_data)
@@ -38,13 +72,38 @@ def filter_and_merge(src_data, tx, hash):
 
     return df_smri, df_fmri
 
-# WORK
+## WORK
+
+# STEP 1: Parse Chat data from google sheet, save to CSV, and merge with BrainSwipes raw results to use for remaining workflow to generate TSV files for HBCD ingestion
+for px, gid in px_gids.items():
+    # Load and save filtered chat data
+    df_chat = load_and_filter_parsed_chat(sheet_id, gid)
+    df_chat.to_csv(chat_dir / f"assign-0-posthoc_{px}.csv", index=False)
+
+    # Load BrainSwipes results
+    df_BS_results = pd.read_csv(
+        f"data/BrainSwipes_results_raw/BrainSwipes-HBCD3{px}-results.csv"
+    )
+
+    # Merge chat results with BrainSwipes results
+    df_merge = pd.concat([df_chat, df_BS_results]).drop_duplicates(
+        subset=df_BS_results.columns[0],
+        keep="first"
+    ).reset_index(drop=True)
+
+    # Save updated results
+    df_merge.to_csv(
+        output_dir / f"BrainSwipes-HBCD3{px}-results_with_chat.csv",
+        index=False
+    )
+
+# STEP 2: Generate TSV files for HBCD ingestion using the updated BrainSwipes results with parsed chat data
 for hash in hash_n:
     if hash == 'hash-d902942d+7a4c379b':
-        src_data = 'data/BrainSwipes-HBCD3pt1-results.csv'
+        src_data = 'data/BrainSwipes_updated_with_chat_results/BrainSwipes-HBCD3pt1-results_with_chat.csv'
         tx='T2w'
     elif hash == 'hash-364caa63+7a4c379b':
-        src_data = 'data/BrainSwipes-HBCD3pt2-results.csv'
+        src_data = 'data/BrainSwipes_updated_with_chat_results/BrainSwipes-HBCD3pt2-results_with_chat.csv'
         tx='T1w'
 
     df_smri, df_fmri = filter_and_merge(src_data, tx, hash)
@@ -97,17 +156,6 @@ for hash in hash_n:
 
     # Save HBCD TSV
     df_merge.to_csv(f'OUT/img_brainswipes_xcpd_{hash}_{tx}.tsv', index=False, na_rep='NA', sep='\t')
-
-    ## FUNC
-    # 0: sub-1006117941_
-    # 1: ses-V02_
-    # 2: hash-0f306a2f+0ef9c88a_
-    # 3: task-rest_
-    # 4: dir-PA_
-    # 5: run-1_
-    # 6: space-MNI152NLin6Asym_
-    # 7: desc-T1wOnTaskBrainSwipes_
-    # 8: bold
 
     # Filter for each modality type and merge to output df
     df_merge_fmri = pd.DataFrame(columns=["participant_id", "session_id", "run_id"])
